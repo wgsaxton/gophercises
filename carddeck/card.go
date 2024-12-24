@@ -4,7 +4,9 @@ package deck
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"sort"
+	"time"
 )
 
 type Suit uint8
@@ -88,4 +90,49 @@ func Less(cards []Card) func(i, j int) bool {
 
 func absRank(c Card) int {
 	return int(c.Suit)*int(maxRank) + int(c.Rank)
+}
+
+var shuffleRand = rand.New(rand.NewPCG(uint64(time.Now().Unix()), uint64(time.Now().Unix()+1)))
+
+func Shuffle(cards []Card) []Card {
+	ret := make([]Card, len(cards))
+	perm := shuffleRand.Perm(len(cards))
+	for i, j := range perm {
+		ret[i] = cards[j]
+	}
+	return ret
+}
+
+func Jokers(n int) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		for i := 0; i < n; i++ {
+			cards = append(cards, Card{
+				Rank: Rank(i),
+				Suit: Joker,
+			})
+		}
+		return cards
+	}
+}
+
+func Filter(f func(card Card) bool) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		var ret []Card
+		for _, c := range cards {
+			if !f(c) {
+				ret = append(ret, c)
+			}
+		}
+		return ret
+	}
+}
+
+func Deck(n int) func([]Card) []Card {
+	return func(cards []Card) []Card {
+		var ret []Card
+		for i := 0; i < n; i++ {
+			ret = append(ret, cards...)
+		}
+		return ret
+	}
 }
